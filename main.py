@@ -1,23 +1,36 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
+
+from fake_useragent import UserAgent
+
 import pandas as pd
 
 from time import sleep
 import random
+from sys import exit
 
-chrome_options = Options()
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
+useragent = UserAgent()
 
-driver = webdriver.Chrome(options=chrome_options)
+
+options = Options()
+# options.set_preference("general.useragent.override", useragent.random)
+
+driver = webdriver.Firefox(options=options)
 
 def try_find_addr(query):
   driver.get("https://google.com")
-  sleep(random.uniform(0.0,1.2))
+  sleep(random.uniform(1.000012,5.0023))
 
-  box = driver.find_element(By.CLASS_NAME, 'gLFyf')
-  box.send_keys(query + "\n")
+  try:
+    box = driver.find_element(By.XPATH, '/html/body/center/form/table/tbody/tr/td[2]/input[3]')
+  except:
+    box = driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/form/div[1]/div[1]/div[1]/div/div[2]/input')
+
+  box.send_keys(query)
+  
+  go = driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/form/div[1]/div[1]/div[4]/center/input[1]')
+  go.click()
 
   try:
     addr = driver.find_element(By.CLASS_NAME, 'LrzXr')
@@ -41,15 +54,19 @@ for index in enmpty:
   if addr != "FAIL":
     df.loc[index, 'Address'] = addr
     print(f"Updated address for {school} in {state} to: '{addr}'")
-    df.to_csv("data_save.csv", index=False)
+    df.to_csv("data.csv", index=False)
     changed += 1
   else:
     print(f"Couldn't get an address for {school} in {state}")
     failed += 1
   print(f"Status: Updated: {str(changed)}, Failed: {str(failed)}")
 
+  if failed > 11:
+    print("Lots of fails. Bot detection got us. Exiting.")
+    exit(0)
 
-df.to_csv("data_save.csv", index=False)
+
+
+df.to_csv("data.csv", index=False)
 
 print("Done.")
-print("Data in new file")
